@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amazon Product Scraper</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --primary-color: #FF9900;
+            --secondary-color: #232F3E;
+            --card-bg: #f5f5f5;
+            --border-color: #dddddd;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --primary-color: #FF9900;
+            --secondary-color: #37475A;
+            --card-bg: #2d2d2d;
+            --border-color: #444444;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .theme-toggle {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .form-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin-right: 10px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #ff4444;
+            margin: 10px 0;
+        }
+
+        .product {
+            display: flex;
+            gap: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 0;
+        }
+
+        .product-image {
+            flex: 0 0 120px;
+        }
+
+        .product-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-size: 1.1em;
+        }
+
+        .product-price {
+            color: #B12704;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .product-rating {
+            margin-bottom: 8px;
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .stats {
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        @media (max-width: 600px) {
+            .product {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .product-image {
+                flex: 0 0 auto;
+                text-align: center;
+            }
+
+            input[type="text"] {
+                width: 70%;
+            }
+        }
+    </style>
+</head>
+<body class="{{ 'dark-mode' if theme == 'dark' else '' }}">
+    <div class="header">
+        <h1>Amazon Product Scraper</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <span id="theme-icon">{{ '🌙' if theme == 'light' else '☀️' }}</span>
+            {{ 'Dark Mode' if theme == 'light' else 'Light Mode' }}
+        </button>
+    </div>
+
+    <div class="form-container">
+        <form method="POST">
+            <input type="text" name="url" placeholder="Enter Amazon search URL (e.g., https://www.amazon.com/s?k=laptops)" required>
+            <button type="submit">Scrape Products</button>
+        </form>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    {% if products %}
+        <div class="stats">
+            Found {{ products|length }} products from: <a href="{{ url }}" target="_blank">{{ url|truncate(50) }}</a>
+        </div>
+
+        {% for product in products %}
+            <div class="product">
+                {% if product.image_url %}
+                <div class="product-image">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" onerror="this.style.display='none'">
+                </div>
+                {% endif %}
+                <div class="product-info">
+                    <div class="product-name">{{ product.name }}</div>
+                    <div class="product-price">{{ product.price }}</div>
+                    <div class="product-rating">
+                        Rating: {{ product.rating }} ({{ product.num_ratings }} ratings)
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="actions">
+            <a href="/download?url={{ url }}" class="download-btn">Download as CSV</a>
+        </div>
+    {% endif %}
+
+    <script>
+        function toggleTheme() {
+            fetch('/toggle_theme')
+                .then(response => response.text())
+                .then(html => {
+                    document.open();
+                    document.write(html);
+                    document.close();
+                });
+        }
+    </script>
+</body>
+</html>
